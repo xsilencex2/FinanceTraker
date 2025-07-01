@@ -134,7 +134,7 @@ input::placeholder {
 .balance-controls .form-group {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
 }
 
 .balance-controls input {
@@ -293,6 +293,7 @@ input::placeholder {
 .button-group {
     display: flex;
     gap: 8px;
+    margin-bottom: 8px;
 }
 
 .button-group button {
@@ -328,6 +329,12 @@ input::placeholder {
     
     .button-group {
         flex-direction: column;
+        gap: 8px;
+    }
+    
+    .button-group button {
+        width: 100%;
+        margin: 0;
     }
     
     .transaction-item {

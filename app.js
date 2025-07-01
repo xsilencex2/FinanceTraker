@@ -61,6 +61,27 @@ class FinancialTracker {
         document.getElementById('decreaseBalanceBtn').addEventListener('click', () => {
             this.decreaseMonthlyBalance();
         });
+
+        // Добавление к балансу
+        document.getElementById('addToBalanceBtn').addEventListener('click', () => {
+            this.addToMonthlyBalance();
+        });
+    }
+
+    addToMonthlyBalance() {
+        const amount = parseFloat(document.getElementById('monthlyBalance').value);
+        
+        if (!amount || amount < 0) {
+            this.showError('Введите корректную сумму для добавления');
+            return;
+        }
+
+        this.data.monthlyBalance += amount;
+        this.saveData();
+        this.updateUI();
+        this.renderCharts();
+        document.getElementById('monthlyBalance').value = '';
+        this.showSuccess('Сумма добавлена к балансу!');
     }
 
     decreaseMonthlyBalance() {
@@ -81,7 +102,7 @@ class FinancialTracker {
         this.updateUI();
         this.renderCharts();
         document.getElementById('monthlyBalance').value = '';
-        this.showSuccess('Месячный баланс уменьшен!');
+        this.showSuccess('Баланс уменьшен!');
     }
 
     updateCategoryOptions() {
@@ -202,6 +223,7 @@ class FinancialTracker {
     updateSummary() {
         const totalExpenses = this.getTotalExpenses();
         const totalSavings = this.getTotalSavings();
+        // Остаток теперь считается только с учетом расходов, без учета сбережений
         const remainingBalance = this.data.monthlyBalance - totalExpenses;
 
         document.getElementById('totalBalance').textContent = `${this.data.monthlyBalance.toFixed(2)} с.`;
