@@ -27,7 +27,6 @@ class FinancialTracker {
         const savedData = localStorage.getItem('financialTracker');
         if (savedData) {
             const data = JSON.parse(savedData);
-            // Обновляем текущий месяц и год, но НЕ очищаем транзакции
             data.currentMonth = new Date().getMonth();
             data.currentYear = new Date().getFullYear();
             return data;
@@ -41,28 +40,23 @@ class FinancialTracker {
     }
 
     bindEvents() {
-        // Форма добавления транзакции
         document.getElementById('transactionForm').addEventListener('submit', (e) => {
             e.preventDefault();
             this.addTransaction();
         });
 
-        // Смена типа операции
         document.getElementById('type').addEventListener('change', () => {
             this.updateCategoryOptions();
         });
 
-        // Установка баланса
         document.getElementById('setBalanceBtn').addEventListener('click', () => {
             this.setMonthlyBalance();
         });
 
-        // Уменьшение баланса
         document.getElementById('decreaseBalanceBtn').addEventListener('click', () => {
             this.decreaseMonthlyBalance();
         });
 
-        // Добавление к балансу
         document.getElementById('addToBalanceBtn').addEventListener('click', () => {
             this.addToMonthlyBalance();
         });
@@ -170,7 +164,6 @@ class FinancialTracker {
     }
 
     showError(message) {
-        // Простое уведомление об ошибке
         const notification = document.createElement('div');
         notification.style.cssText = `
             position: fixed;
@@ -193,7 +186,6 @@ class FinancialTracker {
     }
 
     showSuccess(message) {
-        // Простое уведомление об успехе
         const notification = document.createElement('div');
         notification.style.cssText = `
             position: fixed;
@@ -223,8 +215,8 @@ class FinancialTracker {
     updateSummary() {
         const totalExpenses = this.getTotalExpenses();
         const totalSavings = this.getTotalSavings();
-        // Остаток теперь считается только с учетом расходов, без учета сбережений
-        const remainingBalance = this.data.monthlyBalance - totalExpenses;
+        // Остаток теперь считается с учетом и расходов, и сбережений
+        const remainingBalance = this.data.monthlyBalance - (totalExpenses + totalSavings);
 
         document.getElementById('totalBalance').textContent = `${this.data.monthlyBalance.toFixed(2)} с.`;
         document.getElementById('totalExpenses').textContent = `${totalExpenses.toFixed(2)} с.`;
@@ -267,11 +259,10 @@ class FinancialTracker {
             return;
         }
 
-        // Группируем транзакции по датам
         const groupedByDate = {};
         this.data.transactions.forEach(transaction => {
             const date = new Date(transaction.date);
-            const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+            const dateKey = date.toISOString().split('T')[0];
             const displayDate = date.toLocaleDateString('ru-RU', { 
                 day: 'numeric', 
                 month: 'long', 
@@ -287,7 +278,6 @@ class FinancialTracker {
             groupedByDate[dateKey].transactions.push(transaction);
         });
 
-        // Сортируем даты по убыванию (новые сверху)
         const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
         const html = sortedDates.map(dateKey => {
@@ -332,7 +322,6 @@ class FinancialTracker {
         const ctx = document.getElementById('expenseChart').getContext('2d');
         const expensesByCategory = this.getExpensesByCategory();
         
-        // Уничтожаем предыдущий график если существует
         if (this.expenseChart) {
             this.expenseChart.destroy();
         }
@@ -378,15 +367,13 @@ class FinancialTracker {
     renderBalanceChart() {
         const ctx = document.getElementById('balanceChart').getContext('2d');
         
-        // Уничтожаем предыдущий график если существует
         if (this.balanceChart) {
             this.balanceChart.destroy();
         }
 
-        // Создаем данные для линейного графика баланса
         const totalExpenses = this.getTotalExpenses();
         const totalSavings = this.getTotalSavings();
-        const remainingBalance = this.data.monthlyBalance - totalExpenses;
+        const remainingBalance = this.data.monthlyBalance - (totalExpenses + totalSavings);
 
         this.balanceChart = new Chart(ctx, {
             type: 'bar',
@@ -441,7 +428,6 @@ class FinancialTracker {
     }
 }
 
-// Инициализация приложения
 document.addEventListener('DOMContentLoaded', () => {
     new FinancialTracker();
 });
