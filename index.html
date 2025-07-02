@@ -1,0 +1,908 @@
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Доходы и Расходы</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1A1A1A;
+            color: #E0E0E0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .app {
+            min-height: 100vh;
+            padding-bottom: 90px;
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2C2C2C 0%, #1A1A1A 100%);
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .balance {
+            font-size: 32px;
+            font-weight: 700;
+            color: #4CAF50;
+            margin-top: 10px;
+            text-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);
+        }
+        
+        .tabs {
+            display: flex;
+            background: #2C2C2C;
+            margin: 0;
+            position: sticky;
+            top: 90px;
+            z-index: 99;
+            border-bottom: 1px solid #333;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 18px 10px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            color: #E0E0E0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            font-size: 16px;
+            font-weight: 500;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .tab.active {
+            background: #333;
+            border-bottom-color: #4CAF50;
+            color: #4CAF50;
+        }
+        
+        .tab i {
+            margin-bottom: 4px;
+            font-size: 18px;
+        }
+        
+        .tab-content {
+            padding: 25px 20px;
+            min-height: calc(100vh - 250px);
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 12px;
+            color: #E0E0E0;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 16px;
+            background: #2C2C2C;
+            border: 2px solid #444;
+            border-radius: 12px;
+            color: #E0E0E0;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+        
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .category-item {
+            padding: 20px 15px;
+            background: #2C2C2C;
+            border: 2px solid #444;
+            border-radius: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .category-item:hover {
+            border-color: #4CAF50;
+            background: #333;
+            transform: translateY(-2px);
+        }
+        
+        .category-item.selected {
+            border-color: #4CAF50;
+            background: #4CAF50;
+            color: #1A1A1A;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+        
+        .category-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .category-item div:last-child {
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.2;
+        }
+        
+        .btn-primary {
+            width: 100%;
+            padding: 18px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+            margin-top: 20px;
+        }
+        
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #2C2C2C;
+            display: flex;
+            border-top: 1px solid #444;
+            z-index: 1000;
+            padding: 8px 0;
+        }
+        
+        .nav-item {
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 65px;
+        }
+        
+        .nav-item.active {
+            color: #4CAF50;
+        }
+        
+        .nav-item i {
+            display: block;
+            font-size: 22px;
+            margin-bottom: 4px;
+        }
+        
+        .nav-item span {
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .transaction-item {
+            background: #2C2C2C;
+            padding: 18px;
+            margin-bottom: 12px;
+            border-radius: 16px;
+            border-left: 4px solid #4CAF50;
+            transition: all 0.3s ease;
+        }
+        
+        .transaction-item:hover {
+            background: #333;
+            transform: translateX(4px);
+        }
+        
+        .transaction-item.expense {
+            border-left-color: #F44336;
+        }
+        
+        .transaction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .transaction-amount {
+            font-weight: 600;
+            font-size: 18px;
+        }
+        
+        .transaction-category {
+            color: #888;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: #2C2C2C;
+            padding: 25px 20px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid #333;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            border-color: #4CAF50;
+            transform: translateY(-2px);
+        }
+        
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+        
+        .stat-label {
+            color: #888;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .chart-container {
+            background: #2C2C2C;
+            padding: 25px 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+        }
+        
+        .chart-container h3 {
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .subcategory-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .subcategory-item {
+            padding: 15px 10px;
+            background: #333;
+            border: 2px solid #555;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            font-weight: 500;
+            min-height: 70px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .subcategory-item:hover {
+            border-color: #2196F3;
+            background: #444;
+            transform: translateY(-2px);
+        }
+        
+        .subcategory-item.selected {
+            border-color: #2196F3;
+            background: #2196F3;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+        
+        .subcategory-item i {
+            margin-bottom: 6px;
+            font-size: 18px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #888;
+            margin-top: 60px;
+            padding: 40px 20px;
+        }
+        
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-state div:last-child {
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 480px) {
+            .header {
+                padding: 20px 15px;
+            }
+            
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            .balance {
+                font-size: 28px;
+            }
+            
+            .tab-content {
+                padding: 20px 15px;
+            }
+            
+            .category-grid {
+                gap: 12px;
+            }
+            
+            .category-item {
+                padding: 15px 10px;
+                min-height: 75px;
+            }
+            
+            .category-icon {
+                font-size: 24px;
+                margin-bottom: 6px;
+            }
+            
+            .category-item div:last-child {
+                font-size: 13px;
+            }
+            
+            .stats-grid {
+                gap: 12px;
+            }
+            
+            .stat-card {
+                padding: 20px 15px;
+            }
+            
+            .stat-value {
+                font-size: 20px;
+            }
+            
+            .chart-container {
+                padding: 20px 15px;
+            }
+        }
+        
+        /* Input styling improvements */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        
+        /* Delete button styling */
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #F44336;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .delete-btn:hover {
+            background: rgba(244, 67, 54, 0.1);
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        const categories = {
+            income: [
+                { id: 'salary', name: 'Зарплата', icon: 'fas fa-briefcase' },
+                { id: 'freelance', name: 'Подработка', icon: 'fas fa-laptop-code' },
+                { id: 'gifts', name: 'Подарки', icon: 'fas fa-gift' },
+                { id: 'other', name: 'Другое', icon: 'fas fa-plus-circle' }
+            ],
+            expense: [
+                { id: 'food', name: 'Продукты', icon: 'fas fa-shopping-cart' },
+                { id: 'utilities', name: 'Коммунальные', icon: 'fas fa-home' },
+                { id: 'internet', name: 'Интернет и связь', icon: 'fas fa-wifi' },
+                { id: 'transport', name: 'Транспорт', icon: 'fas fa-car' },
+                { id: 'clothes', name: 'Одежда', icon: 'fas fa-tshirt' },
+                { id: 'health', name: 'Здоровье', icon: 'fas fa-heartbeat' },
+                { id: 'entertainment', name: 'Развлечения', icon: 'fas fa-gamepad' },
+                { id: 'savings', name: 'Копилка', icon: 'fas fa-piggy-bank' }
+            ]
+        };
+        
+        const savingsSubcategories = [
+            { id: 'car', name: 'Машина', icon: 'fas fa-car' },
+            { id: 'education', name: 'Обучение', icon: 'fas fa-graduation-cap' },
+            { id: 'future', name: 'На будущее', icon: 'fas fa-vault' }
+        ];
+        
+        function App() {
+            const [currentView, setCurrentView] = useState('main');
+            const [activeTab, setActiveTab] = useState('expense'); // Changed to expense first
+            const [balance, setBalance] = useState(0);
+            const [transactions, setTransactions] = useState([]);
+            const [selectedCategory, setSelectedCategory] = useState('');
+            const [selectedSubcategory, setSelectedSubcategory] = useState('');
+            const [amount, setAmount] = useState('');
+            const [note, setNote] = useState('');
+            const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+            
+            useEffect(() => {
+                try {
+                    const savedData = localStorage.getItem('crmData');
+                    if (savedData) {
+                        const data = JSON.parse(savedData);
+                        setBalance(data.balance || 0);
+                        setTransactions(data.transactions || []);
+                    }
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    setBalance(0);
+                    setTransactions([]);
+                }
+            }, []);
+            
+            useEffect(() => {
+                try {
+                    localStorage.setItem('crmData', JSON.stringify({
+                        balance,
+                        transactions
+                    }));
+                } catch (error) {
+                    console.error('Error saving data:', error);
+                }
+            }, [balance, transactions]);
+            
+            const addTransaction = () => {
+                if (!amount || !selectedCategory || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+                    alert('Пожалуйста, введите корректную сумму и выберите категорию');
+                    return;
+                }
+                
+                if (selectedCategory === 'savings' && !selectedSubcategory) {
+                    alert('Пожалуйста, выберите подкатегорию для копилки');
+                    return;
+                }
+                
+                const transaction = {
+                    id: Date.now(),
+                    type: activeTab,
+                    category: selectedCategory,
+                    subcategory: selectedSubcategory || null,
+                    amount: parseFloat(amount),
+                    note: note.trim(),
+                    date,
+                    timestamp: new Date().toISOString()
+                };
+                
+                setTransactions([transaction, ...transactions]);
+                
+                if (activeTab === 'income') {
+                    setBalance(prevBalance => prevBalance + parseFloat(amount));
+                } else {
+                    setBalance(prevBalance => prevBalance - parseFloat(amount));
+                }
+                
+                // Reset form
+                setAmount('');
+                setNote('');
+                setSelectedCategory('');
+                setSelectedSubcategory('');
+            };
+            
+            const deleteTransaction = (id) => {
+                const transaction = transactions.find(t => t.id === id);
+                if (transaction) {
+                    if (transaction.type === 'income') {
+                        setBalance(prevBalance => prevBalance - transaction.amount);
+                    } else {
+                        setBalance(prevBalance => prevBalance + transaction.amount);
+                    }
+                    setTransactions(prevTransactions => prevTransactions.filter(t => t.id !== id));
+                }
+            };
+            
+            const getCurrentMonth = () => {
+                const now = new Date();
+                return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+            };
+            
+            const getMonthlyTransactions = () => {
+                const currentMonth = getCurrentMonth();
+                return transactions.filter(t => t.date && t.date.startsWith(currentMonth));
+            };
+            
+            const getMonthlyStats = () => {
+                const monthlyTransactions = getMonthlyTransactions();
+                const income = monthlyTransactions
+                    .filter(t => t.type === 'income')
+                    .reduce((sum, t) => sum + (t.amount || 0), 0);
+                const expenses = monthlyTransactions
+                    .filter(t => t.type === 'expense')
+                    .reduce((sum, t) => sum + (t.amount || 0), 0);
+                
+                return { income, expenses, balance: income - expenses };
+            };
+            
+            const getCategoryName = (categoryId, subcategoryId = null) => {
+                const allCategories = [...categories.income, ...categories.expense];
+                const category = allCategories.find(c => c.id === categoryId);
+                
+                if (subcategoryId && categoryId === 'savings') {
+                    const sub = savingsSubcategories.find(s => s.id === subcategoryId);
+                    return `${category?.name || 'Копилка'} - ${sub?.name || subcategoryId}`;
+                }
+                
+                return category?.name || categoryId;
+            };
+            
+            const getCategoryIcon = (categoryId, subcategoryId = null) => {
+                if (subcategoryId && categoryId === 'savings') {
+                    const sub = savingsSubcategories.find(s => s.id === subcategoryId);
+                    return sub?.icon || 'fas fa-piggy-bank';
+                }
+                
+                const allCategories = [...categories.income, ...categories.expense];
+                const category = allCategories.find(c => c.id === categoryId);
+                return category?.icon || 'fas fa-circle';
+            };
+            
+            const renderMainView = () => (
+                <div>
+                    <div className="header">
+                        <h1>Учет доходов и расходов</h1>
+                        <div className="balance">
+                            <i className="fas fa-wallet"></i> {balance.toLocaleString()} с
+                        </div>
+                    </div>
+                    
+                    <div className="tabs">
+                        <button 
+                            className={`tab ${activeTab === 'expense' ? 'active' : ''}`}
+                            onClick={() => {
+                                setActiveTab('expense');
+                                setSelectedCategory('');
+                                setSelectedSubcategory('');
+                            }}
+                        >
+                            <i className="fas fa-minus-circle"></i>
+                            <span>Расходы</span>
+                        </button>
+                        <button 
+                            className={`tab ${activeTab === 'income' ? 'active' : ''}`}
+                            onClick={() => {
+                                setActiveTab('income');
+                                setSelectedCategory('');
+                                setSelectedSubcategory('');
+                            }}
+                        >
+                            <i className="fas fa-plus-circle"></i>
+                            <span>Доходы</span>
+                        </button>
+                    </div>
+                    
+                    <div className="tab-content">
+                        <div className="form-group">
+                            <label>Выберите категорию:</label>
+                            <div className="category-grid">
+                                {categories[activeTab].map(category => (
+                                    <div
+                                        key={category.id}
+                                        className={`category-item ${selectedCategory === category.id ? 'selected' : ''}`}
+                                        onClick={() => {
+                                            setSelectedCategory(category.id);
+                                            setSelectedSubcategory('');
+                                        }}
+                                    >
+                                        <div className="category-icon">
+                                            <i className={category.icon}></i>
+                                        </div>
+                                        <div>{category.name}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        {selectedCategory === 'savings' && (
+                            <div className="form-group">
+                                <label>Выберите подкатегорию:</label>
+                                <div className="subcategory-grid">
+                                    {savingsSubcategories.map(sub => (
+                                        <div
+                                            key={sub.id}
+                                            className={`subcategory-item ${selectedSubcategory === sub.id ? 'selected' : ''}`}
+                                            onClick={() => setSelectedSubcategory(sub.id)}
+                                        >
+                                            <div><i className={sub.icon}></i></div>
+                                            <div>{sub.name}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        <div className="form-group">
+                            <label>Сумма (сомони):</label>
+                            <input
+                                type="number"
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                                placeholder="Введите сумму"
+                                min="0"
+                                step="0.01"
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Дата:</label>
+                            <input
+                                type="date"
+                                value={date}
+                                onChange={(e) => setDate(e.target.value)}
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Заметка (необязательно):</label>
+                            <textarea
+                                value={note}
+                                onChange={(e) => setNote(e.target.value)}
+                                placeholder="Добавить заметку..."
+                                rows="3"
+                                maxLength="200"
+                            />
+                        </div>
+                        
+                        <button className="btn-primary" onClick={addTransaction}>
+                            Добавить {activeTab === 'income' ? 'доход' : 'расход'}
+                        </button>
+                    </div>
+                </div>
+            );
+            
+            const renderStatsView = () => {
+                const stats = getMonthlyStats();
+                
+                return (
+                    <div className="tab-content">
+                        <h2 style={{marginBottom: '25px', textAlign: 'center', fontSize: '20px', fontWeight: '600'}}>Статистика за месяц</h2>
+                        
+                        <div className="stats-grid">
+                            <div className="stat-card">
+                                <div className="stat-value" style={{color: '#4CAF50'}}>
+                                    {stats.income.toLocaleString()} с
+                                </div>
+                                <div className="stat-label">Доходы</div>
+                            </div>
+                            
+                            <div className="stat-card">
+                                <div className="stat-value" style={{color: '#F44336'}}>
+                                    {stats.expenses.toLocaleString()} с
+                                </div>
+                                <div className="stat-label">Расходы</div>
+                            </div>
+                            
+                            <div className="stat-card">
+                                <div className="stat-value" style={{color: '#2196F3'}}>
+                                    {balance.toLocaleString()} с
+                                </div>
+                                <div className="stat-label">Текущий баланс</div>
+                            </div>
+                            
+                            <div className="stat-card">
+                                <div className="stat-value" style={{color: '#FF9800'}}>
+                                    {stats.balance.toLocaleString()} с
+                                </div>
+                                <div className="stat-label">Итого за месяц</div>
+                            </div>
+                        </div>
+                        
+                        <div className="chart-container">
+                            <h3>Последние операции</h3>
+                            {getMonthlyTransactions().slice(0, 10).map(transaction => (
+                                <div key={transaction.id} className={`transaction-item ${transaction.type}`}>
+                                    <div className="transaction-header">
+                                        <div>
+                                            <i className={getCategoryIcon(transaction.category, transaction.subcategory)}></i>
+                                            {' '}{getCategoryName(transaction.category, transaction.subcategory)}
+                                        </div>
+                                        <div className="transaction-amount" style={{
+                                            color: transaction.type === 'income' ? '#4CAF50' : '#F44336'
+                                        }}>
+                                            {transaction.type === 'income' ? '+' : '-'}{transaction.amount.toLocaleString()} с
+                                        </div>
+                                    </div>
+                                    <div className="transaction-category">
+                                        {transaction.date} • {transaction.note || 'Без заметки'}
+                                    </div>
+                                </div>
+                            ))}
+                            
+                            {getMonthlyTransactions().length === 0 && (
+                                <div className="empty-state">
+                                    <i className="fas fa-calendar-times"></i>
+                                    <div>Нет операций за этот месяц</div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+            
+            const renderHistoryView = () => (
+                <div className="tab-content">
+                    <h2 style={{marginBottom: '25px', textAlign: 'center', fontSize: '20px', fontWeight: '600'}}>История операций</h2>
+                    
+                    {transactions.map(transaction => (
+                        <div key={transaction.id} className={`transaction-item ${transaction.type}`}>
+                            <div className="transaction-header">
+                                <div>
+                                    <i className={getCategoryIcon(transaction.category, transaction.subcategory)}></i>
+                                    {' '}{getCategoryName(transaction.category, transaction.subcategory)}
+                                </div>
+                                <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                                    <div className="transaction-amount" style={{
+                                        color: transaction.type === 'income' ? '#4CAF50' : '#F44336'
+                                    }}>
+                                        {transaction.type === 'income' ? '+' : '-'}{transaction.amount.toLocaleString()} с
+                                    </div>
+                                    <button
+                                        className="delete-btn"
+                                        onClick={() => {
+                                            if (window.confirm('Удалить эту операцию?')) {
+                                                deleteTransaction(transaction.id);
+                                            }
+                                        }}
+                                    >
+                                        <i className="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="transaction-category">
+                                {transaction.date} • {transaction.note || 'Без заметки'}
+                            </div>
+                        </div>
+                    ))}
+                    
+                    {transactions.length === 0 && (
+                        <div className="empty-state">
+                            <i className="fas fa-inbox"></i>
+                            <div>Пока нет операций</div>
+                        </div>
+                    )}
+                </div>
+            );
+            
+            return (
+                <div className="app">
+                    {currentView === 'main' && renderMainView()}
+                    {currentView === 'stats' && renderStatsView()}
+                    {currentView === 'history' && renderHistoryView()}
+                    
+                    <div className="bottom-nav">
+                        <button 
+                            className={`nav-item ${currentView === 'main' ? 'active' : ''}`}
+                            onClick={() => setCurrentView('main')}
+                        >
+                            <i className="fas fa-home"></i>
+                            <span>Главная</span>
+                        </button>
+                        <button 
+                            className={`nav-item ${currentView === 'stats' ? 'active' : ''}`}
+                            onClick={() => setCurrentView('stats')}
+                        >
+                            <i className="fas fa-chart-pie"></i>
+                            <span>Статистика</span>
+                        </button>
+                        <button 
+                            className={`nav-item ${currentView === 'history' ? 'active' : ''}`}
+                            onClick={() => setCurrentView('history')}
+                        >
+                            <i className="fas fa-history"></i>
+                            <span>История</span>
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+        
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
